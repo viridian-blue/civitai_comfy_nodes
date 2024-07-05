@@ -23,5 +23,5 @@ class CivitAI_API_Key_From_Env:
             api_key = os.environ[env_var]
         except KeyError:
             raise ValueError(f"Environment variable {env_var} not found")
-        return api_key
+        return (api_key,)
 
