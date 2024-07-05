@@ -32,8 +32,9 @@ class CivitAI_Model:
     max_retries = 120
     debug_response = False
     warning = False
+    api_key = None
 
-    def __init__(self, model_id, save_path, model_paths, model_types=[], token=None, model_version=None, download_chunks=None, max_download_retries=None, warning=True, debug_response=False):
+    def __init__(self, model_id, save_path, model_paths, model_types=[], model_version=None, download_chunks=None, max_download_retries=None, warning=True, debug_response=False, api_key=None):
         self.model_id = model_id
         self.version = model_version
         self.type = None
@@ -49,6 +50,7 @@ class CivitAI_Model:
         self.file_size = 0
         self.trained_words = None
         self.warning = warning
+        self.api_key = api_key
         
         if download_chunks:
             self.num_chunks = int(download_chunks)
@@ -195,6 +197,11 @@ class CivitAI_Model:
             raise Exception(f"{ERR_PREFIX}No cached model or model data found, and unable to reach CivitAI! Response Code: {response.status_code}\n Please try again later.")
 
     def download(self):
+        authorized_ses = requests.Session()
+        if self.api_key:
+            authorized_ses.headers['Authorization'] = f'Bearer {self.api_key}'
+        else:
+            print(f"{WARN_PREFIX}No API key provided. Downloading with unauthenticated session.")
     
         # DOWNLAOD BYTE CHUNK
         
@@ -207,7 +214,7 @@ class CivitAI_Model:
             while retries <= max_retries:
                 try:
                     headers = {'Range': f'bytes={start_byte + downloaded_bytes}-{end_byte}'}
-                    response = requests.get(url, headers=headers, stream=True, timeout=10)
+                    response = authorized_ses.get(url, headers=headers, stream=True, timeout=10)
                     if response.status_code == 206:
                         with open(file_path, 'r+b') as file:
                             if retries > 0:
@@ -250,12 +257,12 @@ class CivitAI_Model:
         # GET FILE SIZE
         
         def get_total_file_size(url):
-            response = requests.get(url, stream=True)
+            response = authorized_ses.get(url, stream=True)
             content_length = response.headers.get('Content-Length')
             if content_length is not None and content_length.isdigit():
                 return int(content_length)
 
-            response = requests.get(url, headers={'Range': 'bytes=0-999999999'}, stream=True)
+            response = authorized_ses.get(url, headers={'Range': 'bytes=0-999999999'}, stream=True)
             content_range = response.headers.get('Content-Range')
             if content_range:
                 total_bytes = int(re.search(r'/(\d+)', content_range).group(1))
@@ -282,7 +289,7 @@ class CivitAI_Model:
                     return True
 
         if not self.name:
-            response = requests.head(self.download_url)
+            response = authorized_ses.head(self.download_url)
             if 'Content-Disposition' in response.headers:
                 content_disposition = response.headers['Content-Disposition']
                 self.name = re.findall("filename=(.+)", content_disposition)[0].strip('"')
@@ -308,10 +315,10 @@ class CivitAI_Model:
 
         # NO MODEL OR MODEL DATA AVAILABLE -- DOWNLOAD MODEL FROM CIVITAI
 
-        response = requests.head(self.download_url)
+        response = authorized_ses.head(self.download_url)
         total_file_size = total_file_size = get_total_file_size(self.download_url)
-        
-        response = requests.get(self.download_url, stream=True)
+
+        response = authorized_ses.get(self.download_url, stream=True)
         if response.status_code != requests.codes.ok:
             raise Exception(f"{ERR_PREFIX}Failed to download {self.type} file from CivitAI. Status code: {response.status_code}")
             

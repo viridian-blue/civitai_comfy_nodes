@@ -40,9 +40,9 @@ class CivitAI_Checkpoint_Loader:
                 "ckpt_name": (checkpoints,),
             },
             "optional": {
-                "api_key": ("STRING", {"default": None, "multiline": False}),
                 "download_chunks": ("INT", {"default": 4, "min": 1, "max": 12, "step": 1}),
                 "download_path": (list(checkpoint_paths.keys()),),
+                "civitai_api_key": ("CIVITAI_API_KEY",),
             },
             "hidden": {
                 "extra_pnginfo": "EXTRA_PNGINFO"
@@ -54,7 +54,7 @@ class CivitAI_Checkpoint_Loader:
 
     CATEGORY = "CivitAI/Loaders"
 
-    def load_checkpoint(self, ckpt_air, ckpt_name, api_key=None, download_chunks=None, download_path=None, extra_pnginfo=None):
+    def load_checkpoint(self, ckpt_air, ckpt_name, download_chunks=None, download_path=None, extra_pnginfo=None, civitai_api_key=None):
 
         if extra_pnginfo and 'workflow' in extra_pnginfo:
             extra_pnginfo['workflow']['extra'].setdefault('ckpt_airs', [])
@@ -82,7 +82,7 @@ class CivitAI_Checkpoint_Loader:
                 else:
                     download_path = CHECKPOINTS[0]
             
-            civitai_model = CivitAI_Model(model_id=ckpt_id, model_version=version_id, model_types=["Checkpoint",], token=api_key, save_path=download_path, model_paths=CHECKPOINTS, download_chunks=download_chunks)
+            civitai_model = CivitAI_Model(model_id=ckpt_id, model_version=version_id, model_types=["Checkpoint",], save_path=download_path, model_paths=CHECKPOINTS, download_chunks=download_chunks, api_key=civitai_api_key)
                 
             if not civitai_model.download():
                return None, None, None 
