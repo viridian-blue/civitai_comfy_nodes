@@ -55,9 +55,6 @@ class CivitAI_Model:
         if download_chunks:
             self.num_chunks = int(download_chunks)
 
-        if token:
-            self.token = token
-
         if max_download_retries:
             self.max_retries = int(max_download_retries)
             
@@ -95,7 +92,7 @@ class CivitAI_Model:
                                         if file_id and file_id == file_version:
                                             self.name = name
                                             self.name_friendly = file.get('name_friendly')
-                                            self.download_url = f"{file.get('downloadUrl')}?token={self.token}"
+                                            self.download_url = f"{file.get('downloadUrl')}"
                                             self.trained_words = file.get('trained_words')
                                             self.file_details = file
                                             self.file_id = file_version
@@ -159,7 +156,7 @@ class CivitAI_Model:
                         for file in files:
                             download_url = file.get('downloadUrl')
                             if download_url == model_download_url:
-                                self.download_url = download_url + f"?token={self.token}"
+                                self.download_url = download_url
                                 self.file_details = file
                                 self.file_id = file.get('id')
                                 self.name = file.get('name')
@@ -180,7 +177,7 @@ class CivitAI_Model:
                     for file in files:
                         download_url = file.get('downloadUrl')
                         if download_url == model_download_url:
-                            self.download_url = download_url + f"?token={self.token}"
+                            self.download_url = download_url
                             self.file_details = file
                             self.file_id = file.get('id')
                             self.name = file.get('name')
